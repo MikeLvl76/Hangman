@@ -19,6 +19,7 @@ export default function App() {
   const [gameOver, setGameOver] = useState(false);
   const [saves, setSaves] = useState([]);
   const [save, setSave] = useState({});
+  const [displayLeaderboard, setDisplayLeaderboard] = useState(false);
 
   // Fetch data in URL
   const fetchSaves = () => {
@@ -53,7 +54,11 @@ export default function App() {
     if (isWin)
       createSave({
         pseudo: player !== "" ? player : "Unknown",
-        date: new Date().toISOString().split('T').map(v => v.includes('.') ? v.substring(0, v.indexOf('.')) : v).join(', '),
+        date: new Date()
+          .toISOString()
+          .split("T")
+          .map((v) => (v.includes(".") ? v.substring(0, v.indexOf(".")) : v))
+          .join(", "),
         word: word,
         try_count: tryCount,
         correct: correctCount,
@@ -64,7 +69,11 @@ export default function App() {
     if (gameOver)
       createSave({
         pseudo: player !== "" ? player : "Unknown",
-        date: new Date().toISOString().split('T').map(v => v.includes('.') ? v.substring(0, v.indexOf('.')) : v).join(', '),
+        date: new Date()
+          .toISOString()
+          .split("T")
+          .map((v) => (v.includes(".") ? v.substring(0, v.indexOf(".")) : v))
+          .join(", "),
         word: word,
         try_count: tryCount,
         correct: correctCount,
@@ -167,24 +176,18 @@ export default function App() {
     return <>{message}</>;
   };
 
-  // Displaying pseudo leaderboard
-  // Items sorted by score
-  const displayLeaderboard = () => {
-    return (
-      <>
-        {saves.length > 0 ? (
-          <Leaderboard rows={saves.sort((a, b) => b.score - a.score)} />
-        ) : null}
-      </>
-    );
-  };
-
   return (
     <div className="mx-auto">
-      <div className="container w-fit bg-white rounded-lg self-center mx-auto drop-shadow-2xl mt-10">
-        <h1 className="text-2xl font-bold text-center uppercase px-5">
-          Connected Hangman
+      <div className="flex flex-col w-fit self-center mx-auto drop-shadow-2xl mt-10 justify-center">
+        <h1 className="text-2xl font-bold text-center uppercase px-5  bg-white rounded-lg">
+          Hangman
         </h1>
+        <button
+          className="bg-purple-500 hover:bg-purple-700 rounded-lg py-1 px-2 text-white self-center"
+          onClick={() => setDisplayLeaderboard((prev) => !prev)}
+        >
+          Leaderboard
+        </button>
       </div>
 
       <div className="flex flex-row place-content-center mt-10">
@@ -279,7 +282,9 @@ export default function App() {
           </div>
         </div>
       ) : null}
-      {displayLeaderboard()}
+      {displayLeaderboard ? (
+        <Leaderboard rows={saves.sort((a, b) => b.score - a.score)} />
+      ) : null}
     </div>
   );
 }
