@@ -1,4 +1,4 @@
-# Based on Univeristy project
+# Based on University project
 
 This project is based on a connected Hangman, an Arduino was sending data and was receiving data in return by WebSocket. Each time the player got an wrong input one led plugged to the Arduino went red and the player lost if 3 LEDs were all red. In this version, the Arduino is removed and instead the count of errors is displayed and the error limit is extended to 5.
 
