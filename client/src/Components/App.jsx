@@ -78,7 +78,7 @@ export default function App() {
   // If error count is equals to 3 then this is a lose
   useEffect(() => {
     if (hidden.localeCompare(word) === 0) setIsWin((prev) => !prev);
-    if (errorCount === 3) setGameOver((prev) => !prev);
+    if (errorCount === 5) setGameOver((prev) => !prev);
     console.log(hidden, word);
   }, [hidden, errorCount]);
 
@@ -251,6 +251,7 @@ export default function App() {
                     length={hidden.length}
                     tryCount={tryCount}
                     correct={correctCount}
+                    wrong={errorCount}
                   />
                 </div>
               </div>

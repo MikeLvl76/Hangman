@@ -1,4 +1,4 @@
-import { BsType, BsCheck, BsInputCursor } from "react-icons/bs";
+import { BsType, BsCheck, BsInputCursor, BsX } from "react-icons/bs";
 
 export default function GameInfo(props) {
   return (
@@ -14,6 +14,11 @@ export default function GameInfo(props) {
       <div className="justify-center">
         <BsCheck style={{ color: "blue", fontSize: "45px" }} title="Number of correct characters"/>
         <p className="text-center">{props.correct}</p>
+      </div>
+
+      <div className="justify-center">
+        <BsX style={{ color: "red", fontSize: "45px" }} title="Number of wrong characters"/>
+        <p className="text-center">{props.wrong}</p>
       </div>
     </div>
   );
