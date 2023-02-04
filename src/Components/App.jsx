@@ -24,7 +24,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       if (displayLeaderboard || isWin || isGameOver) {
-        const res = await get("http://localhost:5173/");
+        const res = await get(`http://localhost:${import.meta.env.VITE_FETCH_PORT}/`);
         setData(res.data);
       }
     })();
@@ -48,7 +48,7 @@ export default function App() {
           is_found: isWin ? "Yes" : "No",
           score: score + correctCount + word.length - errorCount + (isWin ? 5 : 0),
         };
-        const response = await post("http://localhost:5173/create", data);
+        const response = await post(`http://localhost:${import.meta.env.VITE_FETCH_PORT}/create`, data);
         if (response.status === 200 || response.status === 201)  alert(response.message);
       }
     })();

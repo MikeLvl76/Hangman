@@ -6,6 +6,15 @@ This project is based on a connected Hangman, an Arduino was sending data and wa
 
 You have to run client and server at the same time. Here is the commands below :
 
+- Create a `.env` file at the project root and configure these environment variables inside :
+
+    ```
+    EXPRESS_PORT= # your port
+    VITE_FETCH_PORT= # port used for url fetch, must be the same as EXPRESS_PORT
+    MONGO_URI= # your MongoDB URI, default is : mongodb://localhost
+    MONGO_DB_NAME= # database name
+    ```
+
 - Client : 
 
     ```
@@ -18,4 +27,4 @@ You have to run client and server at the same time. Here is the commands below :
     npm start
     ```
 
-Don't forget to install modules in both directories with `npm i`.
+Don't forget to install modules with `npm i` command.

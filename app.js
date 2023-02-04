@@ -4,6 +4,9 @@ const bodyParser = require('body-parser');
 const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 
@@ -15,8 +18,10 @@ app.use(cookieParser());
 
 app.use("/", require("./routes/index"));
 
+console.log(`Now browsing on http://localhost:${process.env.EXPRESS_PORT}/`);
+
 mongoose
-  .connect("mongodb://localhost/hangman", {
+  .connect(`${process.env.MONGO_URI}/${process.env.MONGO_DB_NAME}`, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
