@@ -11,8 +11,8 @@ router.get("/", function (req, res, next) {
     }
     res.send(
       result.length !== 0
-        ? JSON.stringify({ saves: result.map((v) => v.toJSON()) }, null, 4)
-        : JSON.stringify({ saves: [] })
+        ? JSON.stringify({ data: result.map((v) => v.toJSON()), total: result.length }, null, 4)
+        : JSON.stringify({ data: [], total: result.length })
     );
   });
 });
@@ -34,7 +34,7 @@ router.post("/create", function (req, res, next) {
       return res.status(res.statusCode).send(JSON.stringify({ status: res.statusCode, message: err }));
     }
 
-    res.send(JSON.stringify({ status: res.statusCode, message: 'Success !' }));
+    res.send(JSON.stringify({ status: res.statusCode, message: 'Database operation succeeded !' }));
   });
 });
 

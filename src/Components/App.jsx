@@ -3,6 +3,7 @@ import json from "../../random_words.json";
 import GameInfo from "./GameInfo";
 import { BsCheck } from "react-icons/bs";
 import Leaderboard from "./Leaderboard";
+import { get, post } from "../helpers/urlFetch";
 
 export default function App() {
   const [option, setOption] = useState("");
@@ -16,78 +17,48 @@ export default function App() {
   const [correctCount, setCorrectCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [isWin, setIsWin] = useState(false);
-  const [gameOver, setGameOver] = useState(false);
-  const [saves, setSaves] = useState([]);
-  const [save, setSave] = useState({});
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [data, setData] = useState([]);
   const [displayLeaderboard, setDisplayLeaderboard] = useState(false);
 
-  // Fetch data in URL
-  const fetchSaves = () => {
-    fetch("http://localhost:5173/", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    })
-      .then((res) => res.json())
-      .then((res) => setSaves(res.saves))
-      .catch((err) => console.log(err));
-  };
-
-  // When fetching this url, a new document is inserted to DB and the result of this operation is sent
-  const createSave = (data) => {
-    fetch("http://localhost:5173/create", {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: { "Content-Type": "application/json" },
-    })
-      .then((res) => res.json())
-      .then((res) => setSave(res))
-      .catch((err) => console.log(err));
-  };
-
-  // Fetch data only when existing in DB
   useEffect(() => {
-    if (save.status === 200) fetchSaves();
-  }, [save]);
+    (async () => {
+      if (displayLeaderboard || isWin || isGameOver) {
+        const res = await get("http://localhost:5173/");
+        setData(res.data);
+      }
+    })();
+  }, [displayLeaderboard]);
 
   // If end game then a document is created in DB
   useEffect(() => {
-    if (isWin)
-      createSave({
-        pseudo: player !== "" ? player : "Unknown",
-        date: new Date()
-          .toISOString()
-          .split("T")
-          .map((v) => (v.includes(".") ? v.substring(0, v.indexOf(".")) : v))
-          .join(", "),
-        word: word,
-        try_count: tryCount,
-        correct: correctCount,
-        wrong: errorCount,
-        is_found: "Yes",
-        score: score + correctCount + word.length - errorCount + 5, // bonus win
-      });
-    if (gameOver)
-      createSave({
-        pseudo: player !== "" ? player : "Unknown",
-        date: new Date()
-          .toISOString()
-          .split("T")
-          .map((v) => (v.includes(".") ? v.substring(0, v.indexOf(".")) : v))
-          .join(", "),
-        word: word,
-        try_count: tryCount,
-        correct: correctCount,
-        wrong: errorCount,
-        is_found: "No",
-        score: score + correctCount + word.length - errorCount, // no +5 points when lost
-      });
-  }, [isWin, gameOver]);
+    (async () => {
+      if (isWin || isGameOver) {
+        const data = {
+          pseudo: player !== "" ? player : "Unknown",
+          date: new Date()
+            .toISOString()
+            .split("T")
+            .map((v) => (v.includes(".") ? v.substring(0, v.indexOf(".")) : v))
+            .join(", "),
+          word: word,
+          try_count: tryCount,
+          correct: correctCount,
+          wrong: errorCount,
+          is_found: isWin ? "Yes" : "No",
+          score: score + correctCount + word.length - errorCount + (isWin ? 5 : 0),
+        };
+        const response = await post("http://localhost:5173/create", data);
+        if (response.status === 200 || response.status === 201)  alert(response.message);
+      }
+    })();
+  }, [isWin, isGameOver]);
 
   // If hidden = word then win
   // If error count is equals to 3 then this is a lose
   useEffect(() => {
     if (hidden.localeCompare(word) === 0) setIsWin((prev) => !prev);
-    if (errorCount === 5) setGameOver((prev) => !prev);
+    if (errorCount === 5) setIsGameOver((prev) => !prev);
     console.log(hidden, word);
   }, [hidden, errorCount]);
 
@@ -156,7 +127,7 @@ export default function App() {
     setCorrectCount(0);
 
     if (isWin) setIsWin((prev) => !prev);
-    if (gameOver) setGameOver((prev) => !prev);
+    if (isGameOver) setIsGameOver((prev) => !prev);
     setHidden("");
     setConfirmed(false);
   };
@@ -167,7 +138,7 @@ export default function App() {
       <p className="uppercase text-center text-white bold text-2xl">
         CONGRATS ! You have found the word : {word}
       </p>
-    ) : gameOver ? (
+    ) : isGameOver ? (
       <p className="uppercase text-center text-white bold text-2xl">
         GAME OVER ! The word was : {word}
       </p>
@@ -222,7 +193,7 @@ export default function App() {
           className="text-center bg-white w-fit px-2 align-center rounded-full drop-shadow-2xl"
           type="submit"
           onClick={confirmChoice}
-          disabled={confirmed || isWin || gameOver}
+          disabled={confirmed || isWin || isGameOver}
         >
           <BsCheck
             style={{
@@ -269,7 +240,7 @@ export default function App() {
                   maxLength="1"
                   onChange={handleTextChange}
                   onKeyDown={handleKeyDown}
-                  disabled={isWin || gameOver}
+                  disabled={isWin || isGameOver}
                 />
                 <button
                   className="bg-purple-500 hover:bg-purple-700 rounded-lg py-1 px-2 text-white"
@@ -283,7 +254,7 @@ export default function App() {
         </div>
       ) : null}
       {displayLeaderboard ? (
-        <Leaderboard rows={saves.sort((a, b) => b.score - a.score)} />
+        <Leaderboard rows={data.sort((a, b) => b.score - a.score)} />
       ) : null}
     </div>
   );
