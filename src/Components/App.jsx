@@ -24,7 +24,9 @@ export default function App() {
   useEffect(() => {
     (async () => {
       if (displayLeaderboard || isWin || isGameOver) {
-        const res = await get(`http://localhost:${import.meta.env.VITE_FETCH_PORT}/`);
+        const res = await get(
+          `http://localhost:${import.meta.env.VITE_FETCH_PORT}/`
+        );
         setData(res.data);
       }
     })();
@@ -46,10 +48,13 @@ export default function App() {
           correct: correctCount,
           wrong: errorCount,
           is_found: isWin ? "Yes" : "No",
-          score: score + correctCount + word.length - errorCount + (isWin ? 5 : 0),
+          score:
+            score + correctCount + word.length - errorCount + (isWin ? 5 : 0),
         };
-        const response = await post(`http://localhost:${import.meta.env.VITE_FETCH_PORT}/create`, data);
-        if (response.status === 200 || response.status === 201)  alert(response.message);
+        await post(
+          `http://localhost:${import.meta.env.VITE_FETCH_PORT}/create`,
+          data
+        );
       }
     })();
   }, [isWin, isGameOver]);
@@ -85,6 +90,7 @@ export default function App() {
     if (e.key === "Enter") {
       setInput(input);
       inputValidation();
+      setInput("");
     }
   };
 
@@ -130,6 +136,7 @@ export default function App() {
     if (isGameOver) setIsGameOver((prev) => !prev);
     setHidden("");
     setConfirmed(false);
+    setOption("");
   };
 
   // End game message
@@ -171,6 +178,7 @@ export default function App() {
             onChange={(e) => setPlayer(e.target.value)}
           />
           <select
+            value={option}
             disabled={confirmed}
             onChange={handleSelect}
             className="h-full bg-white rounded-lg text-center uppercase focus:outline-none"
@@ -240,6 +248,7 @@ export default function App() {
                   maxLength="1"
                   onChange={handleTextChange}
                   onKeyDown={handleKeyDown}
+                  value={input}
                   disabled={isWin || isGameOver}
                 />
                 <button

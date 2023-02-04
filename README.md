@@ -1,6 +1,10 @@
 # Based on University project
 
+<div>
+<p style="text-align: justify;">
 This project is based on a connected Hangman, an Arduino was sending data and was receiving data in return by WebSocket. Each time the player got an wrong input one led plugged to the Arduino went red and the player lost if 3 LEDs were all red. In this version, the Arduino is removed and instead the count of errors is displayed and the error limit is extended to 5.
+</p>
+
 
 ## How to run
 
@@ -24,5 +28,4 @@ This project is based on a connected Hangman, an Arduino was sending data and wa
         ```
         docker compose up --build
         ```
-
-Don't forget to install modules with `npm i` command before beginning.
+</div>
