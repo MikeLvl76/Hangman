@@ -1,10 +1,12 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 const logger = require("morgan");
 const cors = require("cors");
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const mongoose = require("mongoose");
+const mongoHost = 'URL_MONGO' in process.env ? process.env.URL_MONGO : process.env.MONGO_URI;
+const mongoDB = 'DB_MONGO' in process.env ? process.env.DB_MONGO : process.env.MONGO_DB_NAME;
+const dotenv = require("dotenv");
 
 dotenv.config();
 
@@ -18,10 +20,12 @@ app.use(cookieParser());
 
 app.use("/", require("./routes/index"));
 
-console.log(`Now browsing on http://localhost:${process.env.EXPRESS_PORT}/`);
+app.listen(process.env.EXPRESS_PORT, () => {
+  console.log(`Now browsing on http://localhost:${process.env.EXPRESS_PORT}/`);
+});
 
 mongoose
-  .connect(`${process.env.MONGO_URI}/${process.env.MONGO_DB_NAME}`, {
+  .connect(`${mongoHost}/${mongoDB}`, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

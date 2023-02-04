@@ -4,8 +4,6 @@ This project is based on a connected Hangman, an Arduino was sending data and wa
 
 ## How to run
 
-You have to run client and server at the same time. Here is the commands below :
-
 - Create a `.env` file at the project root and configure these environment variables inside :
 
     ```
@@ -15,16 +13,16 @@ You have to run client and server at the same time. Here is the commands below :
     MONGO_DB_NAME= # database name
     ```
 
-- Client : 
+- Make sure that you have [Docker](https://www.docker.com/) installed in your device and run these commands :
 
-    ```
-    npm run dev
-    ```
+    - Construct image :
+        ```
+        docker build -t connected-hangman .
+        ```
 
-- Server :
+    - Build containers :
+        ```
+        docker compose up --build
+        ```
 
-    ```
-    npm start
-    ```
-
-Don't forget to install modules with `npm i` command.
+Don't forget to install modules with `npm i` command before beginning.
