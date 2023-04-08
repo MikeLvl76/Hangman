@@ -1,86 +1,81 @@
-import { useEffect, useState } from "react";
-import json from "../../random_words.json";
-import GameInfo from "./GameInfo";
+import { useContext, useEffect, useState } from "react";
+import json from "../wordsList.json";
+import { GameInfo } from "./GameInfo";
 import { BsCheck } from "react-icons/bs";
-import Leaderboard from "./Leaderboard";
-import { get, post } from "../helpers/urlFetch";
+import { Leaderboard } from "./Leaderboard";
+import { SaveContext } from "./context/SaveContext";
 
 export default function App() {
-  const [option, setOption] = useState("");
-  const [word, setWord] = useState("");
+  const [stats, setStats] = useState({
+    tries: 0,
+    correct: 0,
+    wrong: 0,
+    score: 0,
+    total: 0,
+  });
+
+  const [end, setEnd] = useState({
+    win: false,
+    lose: false,
+  });
+
+  const [options, setOptions] = useState({
+    playerName: "Unknown",
+    word_to_guess: "",
+    hidden_word: "",
+    difficulty: "",
+  });
+
   const [confirmed, setConfirmed] = useState(false);
-  const [player, setPlayer] = useState("");
-  const [score, setScore] = useState(0);
-  const [hidden, setHidden] = useState("");
   const [input, setInput] = useState("");
-  const [tryCount, setTryCount] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [errorCount, setErrorCount] = useState(0);
-  const [isWin, setIsWin] = useState(false);
-  const [isGameOver, setIsGameOver] = useState(false);
-  const [data, setData] = useState([]);
   const [displayLeaderboard, setDisplayLeaderboard] = useState(false);
 
+  const { saves, saveGame, clearSaves } = useContext(SaveContext);
+
+  // Save locally in browser when game has ended
   useEffect(() => {
-    (async () => {
-      if (displayLeaderboard || isWin || isGameOver) {
-        const res = await get(
-          `http://localhost:${import.meta.env.VITE_FETCH_PORT}/`
-        );
-        setData(res.data);
-      }
-    })();
-  }, [displayLeaderboard]);
+    if (end.win || end.lose) {
+      saveGame({
+        pseudo: options.playerName,
+        date: new Date()
+          .toISOString()
+          .split("T")
+          .map((v) => (v.includes(".") ? v.substring(0, v.indexOf(".")) : v))
+          .join(", "),
+        word: options.word_to_guess,
+        try_count: stats.tries,
+        correct: stats.correct,
+        wrong: stats.wrong,
+        is_found: end.win ? "Yes" : "No",
+        total_score: stats.total,
+      });
+    }
+  }, [end]);
 
-  // If end game then a document is created in DB
   useEffect(() => {
-    (async () => {
-      if (isWin || isGameOver) {
-        const data = {
-          pseudo: player !== "" ? player : "Unknown",
-          date: new Date()
-            .toISOString()
-            .split("T")
-            .map((v) => (v.includes(".") ? v.substring(0, v.indexOf(".")) : v))
-            .join(", "),
-          word: word,
-          try_count: tryCount,
-          correct: correctCount,
-          wrong: errorCount,
-          is_found: isWin ? "Yes" : "No",
-          score:
-            score + correctCount + word.length - errorCount + (isWin ? 5 : 0),
-        };
-        await post(
-          `http://localhost:${import.meta.env.VITE_FETCH_PORT}/create`,
-          data
-        );
-      }
-    })();
-  }, [isWin, isGameOver]);
+    // If hidden word = word to guess then we win
+    if (options.hidden_word.localeCompare(options.word_to_guess) === 0) {
+      setEnd((prev) => ({ ...prev, win: true }));
+    }
+    // Too many errors will cause player to lose
+    if (stats.wrong === 5) {
+      setEnd((prev) => ({ ...prev, lose: true }));
+    }
+  }, [options, stats]);
 
-  // If hidden = word then win
-  // If error count is equals to 3 then this is a lose
-  useEffect(() => {
-    if (hidden.localeCompare(word) === 0) setIsWin((prev) => !prev);
-    if (errorCount === 5) setIsGameOver((prev) => !prev);
-    console.log(hidden, word);
-  }, [hidden, errorCount]);
-
-  // Set state when option is selected
-  const handleSelect = (e) => {
-    setOption(e.target.value);
-  };
-
-  // When option is selected, a reading in a json file is made for retrieving data as list
-  // One item is randomly selected in this list
-  // Hidden word has the same length than word so we can just replace each character by '-'
   const confirmChoice = () => {
-    if (option !== "") {
-      const array = json[option];
-      const w = array[Math.floor(Math.random() * array.length)];
-      setWord(w);
-      setHidden([...w].map((_) => "_").join(""));
+    if (Object.keys(json).includes(options.difficulty)) {
+      // Select randomly one word in JSON file
+      // and have its copy transformed to _ characters
+      const list = json[options.difficulty];
+      const random_word = list[Math.floor(Math.random() * list.length)];
+      // Turn string into array and turn each value into '_'
+      // and then join blank character to each value by using join()
+      setOptions((prev) => ({
+        ...prev,
+        word_to_guess: random_word,
+        hidden_word: [...random_word].map((_) => "_").join(""),
+      }));
       setConfirmed(true);
     }
   };
@@ -94,64 +89,91 @@ export default function App() {
     }
   };
 
-  // Set state when input has occured
-  const handleTextChange = (e) => {
-    setInput(e.target.value.toLowerCase());
-  };
-
-  // Validate input and say whether it's wrong or not
-  // If user types an input that was correct previously an alert will be displayed
   const inputValidation = () => {
-    if (hidden.includes(input)) {
+    // Already typed before
+    if (options.hidden_word.includes(input)) {
       alert(`${input} already typed !`);
       return;
     }
-    setTryCount((prev) => prev + 1);
-    if (word.includes(input)) {
-      setHidden((prev) =>
-        [...word]
-          .map((v) => {
-            if (v === input || prev.includes(v)) return v;
+    // Increasing tries field after if condition in order to be fair
+    setStats((prev) => ({ ...prev, tries: stats.tries + 1 }));
+    // Update hidden word field by replacing one or many same characters by input
+    // if input character is in the word to guess
+    if (options.word_to_guess.includes(input)) {
+      setOptions((prev) => ({
+        ...prev,
+        hidden_word: [...options.word_to_guess]
+          .map((char) => {
+            if (char === input || options.hidden_word.includes(v)) return v;
             return "_";
           })
-          .join("")
-      );
-      console.log(word, hidden);
-      setCorrectCount((prev) => prev + 1);
-      setScore((prev) => prev + 1);
+          .join(""),
+      }));
+      // Debug
+      console.log(options);
+      // Update stats
+      setStats((prev) => ({
+        ...prev,
+        correct: stats.correct + 1,
+        score: stats.score + 1,
+      }));
     } else {
-      setErrorCount((prev) => prev + 1);
-      setScore((prev) => prev - 1);
+      setStats((prev) => ({
+        ...prev,
+        correct: stats.wrong + 1,
+        score: stats.score - 1,
+      }));
     }
   };
 
   // When game finishes all states and inputs are reset
   const reset = () => {
-    setScore(0);
-    setTryCount(0);
-    setErrorCount(0);
-    setCorrectCount(0);
+    setStats({
+      tries: 0,
+      correct: 0,
+      wrong: 0,
+      score: 0,
+      total: 0,
+    });
 
-    if (isWin) setIsWin((prev) => !prev);
-    if (isGameOver) setIsGameOver((prev) => !prev);
-    setHidden("");
+    setEnd({
+      win: false,
+      lose: false,
+    });
+
+    setOptions({
+      playerName: "Unknown",
+      word_to_guess: "",
+      hidden_word: "",
+      difficulty: "",
+    });
+
     setConfirmed(false);
-    setOption("");
   };
 
   // End game message
   const endMessage = () => {
-    const message = isWin ? (
-      <p className="uppercase text-center text-white bold text-2xl">
-        CONGRATS ! You have found the word : {word}
-      </p>
-    ) : isGameOver ? (
-      <p className="uppercase text-center text-white bold text-2xl">
-        GAME OVER ! The word was : {word}
-      </p>
-    ) : null;
+    if (end.win) {
+      return (
+        <>
+          <p className="uppercase text-center text-white bold text-2xl">
+            CONGRATS ! You have found the word : {options.word_to_guess}
+          </p>
+        </>
+      );
+    }
 
-    return <>{message}</>;
+    if (end.lose) {
+      return (
+        <>
+          <p className="uppercase text-center text-white bold text-2xl">
+            GAME OVER ! The word was : {options.word_to_guess}
+          </p>
+        </>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -175,12 +197,16 @@ export default function App() {
             placeholder="Type your pseudo"
             maxLength="10"
             type="text"
-            onChange={(e) => setPlayer(e.target.value)}
+            onChange={(e) =>
+              setOptions((prev) => ({ ...prev, playerName: e.target.value }))
+            }
           />
           <select
-            value={option}
+            value={options.difficulty}
             disabled={confirmed}
-            onChange={handleSelect}
+            onChange={(e) =>
+              setOptions((prev) => ({ ...prev, difficulty: e.target.value }))
+            }
             className="h-full bg-white rounded-lg text-center uppercase focus:outline-none"
           >
             <option className="" value={""}>
@@ -201,7 +227,7 @@ export default function App() {
           className="text-center bg-white w-fit px-2 align-center rounded-full drop-shadow-2xl"
           type="submit"
           onClick={confirmChoice}
-          disabled={confirmed || isWin || isGameOver}
+          disabled={confirmed || end.win || end.lose}
         >
           <BsCheck
             style={{
@@ -212,13 +238,13 @@ export default function App() {
         </button>
       </div>
 
-      {hidden !== "" ? (
+      {options.hidden_word !== "" ? (
         <div>
           <div>
             <div className="flex flex-col items-center mt-10">
               <div className="flex flex-row space-x-5">
                 <div className="bg-white w-fit h-fit rounded-lg flex flex-row tracking-widest space-x-5 content-center">
-                  {[...hidden].map((v) =>
+                  {[...options.hidden_word].map((v) =>
                     v !== "_" ? (
                       <p className="text-5xl uppercase underline underline-offset-8 mb-5 py-2 px-4">
                         {v}
@@ -230,10 +256,10 @@ export default function App() {
                 </div>
                 <div className="bg-white self-center w-fit h-fit rounded-lg align-top py-2 px-4">
                   <GameInfo
-                    length={hidden.length}
-                    tryCount={tryCount}
-                    correct={correctCount}
-                    wrong={errorCount}
+                    length={options.hidden_word.length}
+                    tryCount={stats.tries}
+                    correct={stats.correct}
+                    wrong={stats.wrong}
                   />
                 </div>
               </div>
@@ -246,10 +272,10 @@ export default function App() {
                   placeholder="Type one character"
                   type="text"
                   maxLength="1"
-                  onChange={handleTextChange}
+                  onChange={(e) => setInput(e.target.value.toLowerCase())}
                   onKeyDown={handleKeyDown}
                   value={input}
-                  disabled={isWin || isGameOver}
+                  disabled={end.win || end.lose}
                 />
                 <button
                   className="bg-purple-500 hover:bg-purple-700 rounded-lg py-1 px-2 text-white"
@@ -263,7 +289,7 @@ export default function App() {
         </div>
       ) : null}
       {displayLeaderboard ? (
-        <Leaderboard rows={data.sort((a, b) => b.score - a.score)} />
+        <Leaderboard rows={saves.sort((a, b) => b.score - a.score)} />
       ) : null}
     </div>
   );
