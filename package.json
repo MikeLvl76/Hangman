@@ -9,10 +9,6 @@
     "start": "vite & node server"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "http-errors": "~1.6.3",
-    "morgan": "~1.9.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.7.1",

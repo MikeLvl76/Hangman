@@ -36,7 +36,7 @@ export default function App() {
   useEffect(() => {
     if (end.win || end.lose) {
       saveGame({
-        pseudo: options.playerName,
+        player: options.playerName,
         date: new Date()
           .toISOString()
           .split("T")
@@ -47,21 +47,36 @@ export default function App() {
         correct: stats.correct,
         wrong: stats.wrong,
         is_found: end.win ? "Yes" : "No",
-        total_score: stats.total,
+        total: stats.total,
       });
     }
-  }, [end]);
+  }, [end.win, end.lose]);
 
   useEffect(() => {
     // If hidden word = word to guess then we win
-    if (options.hidden_word.localeCompare(options.word_to_guess) === 0) {
+    if (
+      options.hidden_word.localeCompare(options.word_to_guess) === 0 &&
+      options.word_to_guess.length > 0
+    ) {
       setEnd((prev) => ({ ...prev, win: true }));
+      setStats((prev) => ({
+        ...prev,
+        total:
+          stats.score * 2 +
+          stats.correct +
+          options.word_to_guess.length -
+          stats.wrong,
+      }));
     }
     // Too many errors will cause player to lose
     if (stats.wrong === 5) {
       setEnd((prev) => ({ ...prev, lose: true }));
+      setStats((prev) => ({
+        ...prev,
+        total: stats.score + stats.correct - stats.wrong,
+      }));
     }
-  }, [options, stats]);
+  }, [options.hidden_word, stats.wrong]);
 
   const confirmChoice = () => {
     if (Object.keys(json).includes(options.difficulty)) {
@@ -104,13 +119,12 @@ export default function App() {
         ...prev,
         hidden_word: [...options.word_to_guess]
           .map((char) => {
-            if (char === input || options.hidden_word.includes(v)) return v;
+            if (char === input || options.hidden_word.includes(char)) return char;
             return "_";
           })
           .join(""),
       }));
-      // Debug
-      console.log(options);
+
       // Update stats
       setStats((prev) => ({
         ...prev,
@@ -120,7 +134,7 @@ export default function App() {
     } else {
       setStats((prev) => ({
         ...prev,
-        correct: stats.wrong + 1,
+        wrong: stats.wrong + 1,
         score: stats.score - 1,
       }));
     }
@@ -194,12 +208,13 @@ export default function App() {
         <div className="w-fit px-2 align-center drop-shadow-2xl">
           <input
             className="w-min rounded-lg text-center mr-5 uppercase"
-            placeholder="Type your pseudo"
+            placeholder="Type your username"
             maxLength="10"
             type="text"
             onChange={(e) =>
               setOptions((prev) => ({ ...prev, playerName: e.target.value }))
             }
+            disabled={confirmed}
           />
           <select
             value={options.difficulty}
@@ -227,7 +242,7 @@ export default function App() {
           className="text-center bg-white w-fit px-2 align-center rounded-full drop-shadow-2xl"
           type="submit"
           onClick={confirmChoice}
-          disabled={confirmed || end.win || end.lose}
+          disabled={confirmed}
         >
           <BsCheck
             style={{
@@ -288,9 +303,7 @@ export default function App() {
           </div>
         </div>
       ) : null}
-      {displayLeaderboard ? (
-        <Leaderboard rows={saves.sort((a, b) => b.score - a.score)} />
-      ) : null}
+      {displayLeaderboard ? <Leaderboard rows={saves} /> : null}
     </div>
   );
 }
