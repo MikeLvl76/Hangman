@@ -19,8 +19,10 @@ This version has many differences :
 - Refactored code and better implementation
 
 Maybe I will create a new repo for the old one.
-</p>
 
+***Warning*** : App is not adapted to smartphones screen.
+
+</p>
 
 ## Get started
 
