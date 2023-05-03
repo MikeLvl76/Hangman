@@ -6,6 +6,7 @@ import { Leaderboard } from "./Leaderboard";
 import { SaveContext } from "./context/SaveContext";
 
 export default function App() {
+  const { saves, saveGame, clearSaves } = useContext(SaveContext);
   const [stats, setStats] = useState({
     tries: 0,
     correct: 0,
@@ -20,7 +21,9 @@ export default function App() {
   });
 
   const [options, setOptions] = useState({
-    playerName: "Unknown",
+    playerName: saves[saves.length - 1]
+      ? saves[saves.length - 1].player
+      : "Unknown",
     word_to_guess: "",
     hidden_word: "",
     difficulty: "",
@@ -29,8 +32,6 @@ export default function App() {
   const [confirmed, setConfirmed] = useState(false);
   const [input, setInput] = useState("");
   const [displayLeaderboard, setDisplayLeaderboard] = useState(false);
-
-  const { saves, saveGame, clearSaves } = useContext(SaveContext);
 
   // Save locally in browser when game has ended
   useEffect(() => {
@@ -119,7 +120,8 @@ export default function App() {
         ...prev,
         hidden_word: [...options.word_to_guess]
           .map((char) => {
-            if (char === input || options.hidden_word.includes(char)) return char;
+            if (char === input || options.hidden_word.includes(char))
+              return char;
             return "_";
           })
           .join(""),
@@ -156,7 +158,6 @@ export default function App() {
     });
 
     setOptions({
-      playerName: "Unknown",
       word_to_guess: "",
       hidden_word: "",
       difficulty: "",
@@ -207,6 +208,7 @@ export default function App() {
       <div className="flex flex-row place-content-center mt-10">
         <div className="w-fit px-2 align-center drop-shadow-2xl">
           <input
+            value={options.playerName}
             className="w-min rounded-lg text-center mr-5 uppercase"
             placeholder="Type your username"
             maxLength="10"
